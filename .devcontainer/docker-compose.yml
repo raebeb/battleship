@@ -24,8 +24,11 @@ services:
     environment:
      - REDIS_REPLICATION_MODE=master
 
-  web:
-    build: .
+  app:
+    build: 
+      context: ./workspaces
+      dockerfile: Dockerfile
+    
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/code
