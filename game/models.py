@@ -1,4 +1,4 @@
-from telnetlib import GA
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 from .defines import DIRECTIONS,SHIPS, ROOMS, GAME_CONFIGURATION
 
@@ -11,11 +11,9 @@ class Ship(models.Model):
         models (Model): model django class instance
     """
 
-    kind = models.CharField(choices=SHIPS, max_length=50)
-    body_length = models.PositiveSmallIntegerField()
-    head_position = models.CharField(max_length=10)
-    direction = models.CharField(choices=DIRECTIONS ,max_length=1)
-    
+    kind = models.CharField(choices=SHIPS, max_length=50, unique=True)
+    length = models.PositiveSmallIntegerField()
+
     @property
     def critical_points(self):
         #define segun kind
@@ -29,13 +27,11 @@ class Ship(models.Model):
         verbose_name_plural = 'Ships'
 
     def __str__(self):
-        return f"{self.kind} / {self.body_length}"
+        return f"{self.kind} / {self.length}"
 
-
-class User(models.Model):
+class User(AbstractUser):
     """Model definition for User."""
 
-    nick_name = models.CharField(max_length=50)
     token = models.CharField(max_length=20)
 
     class Meta:
@@ -45,8 +41,7 @@ class User(models.Model):
         verbose_name_plural = 'Users'
 
     def __str__(self):
-        """Unicode representation of User."""
-        pass
+        return self.username
 
 
 class Room(models.Model):
@@ -65,13 +60,12 @@ class Room(models.Model):
         verbose_name_plural = 'Rooms'
 
     def __str__(self):
-        """Unicode representation of Room."""
-        pass
+        return f"{self.kind} | {self.active} | {self.user}"
 
 class Game(models.Model):
     """Model definition for Game."""
 
-    players = models.CharField(max_length=250)
+    players = models.CharField(max_length=250)  
     room = models.ForeignKey(
         Room, 
         on_delete=models.CASCADE,
@@ -90,3 +84,67 @@ class Game(models.Model):
     def __str__(self):
         """Unicode representation of Game."""
         return f"{self.room} - {self.players}"
+
+class Board(models.Model):
+    """Model definition for Board."""
+    game = models.ForeignKey(
+        Game, 
+        on_delete=models.CASCADE,
+        related_name="boards")
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="boards"
+        )
+    class Meta:
+        """Meta definition for Board."""
+
+        verbose_name = 'Board'
+        verbose_name_plural = 'Boards'
+
+    def __str__(self):
+        return f"{self.game} - {self.user}"
+
+class BoardShip(models.Model):
+    """Model definition for BoardShip."""
+
+    board = models.ForeignKey(
+        Board, 
+        on_delete=models.CASCADE,
+        related_name="board_ships")
+    
+    ship = models.ForeignKey(
+        Ship,
+        on_delete=models.CASCADE,
+        null=True)
+
+    coordinate = models.CharField(max_length=50) 
+    direction = models.CharField(choices=DIRECTIONS, max_length=1)
+    ship_life = models.IntegerField()
+
+
+    class Meta:
+        """Meta definition for BoardShip."""
+
+        verbose_name = 'BoardShip'
+        verbose_name_plural = 'BoardShips'
+
+    def __str__(self):
+       return f"{self.board} - {self.ship}"
+
+class Shot(models.Model):
+    """Model definition for Shot."""
+
+    board = models.ForeignKey(Board, on_delete=models.CASCADE)
+    coordinate = models.CharField(max_length=50)
+
+    class Meta:
+        """Meta definition for Shot."""
+
+        verbose_name = 'Shot'
+        verbose_name_plural = 'Shots'
+
+    def __str__(self):
+        """Unicode representation of Shot."""
+        return f"{self.board.user.username}{self.coordinate}"

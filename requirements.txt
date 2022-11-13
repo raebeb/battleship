@@ -11,6 +11,7 @@ cryptography==38.0.1
 daphne==4.0.0
 Deprecated==1.2.13
 Django==4.1
+djangorestframework==3.14.0
 hyperlink==21.0.0
 idna==3.4
 incremental==22.10.0
